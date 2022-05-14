@@ -50,7 +50,7 @@ for idd in range(2000):
       dm_comp = cic_compensation(dm)
       np.save(savepath + 'field', dm_comp)
       
-      ps = FFTPower(dm_comp, mode='1d').power
-      k, p = ps.modes, ps.power
+      ps = FFTPower(dm_comp, mode='1d').power.data
+      k, p = ps['k'], ps['power'].real
       np.save(savepath + 'power', np.stack([k, p]).T)
       del dm, dm_comp
