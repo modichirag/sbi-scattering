@@ -41,7 +41,7 @@ col = "POS "
 
 idd = 0
 for idd in range(2000):
-      if idd%20 == 0: print(idd)
+      print(idd)
       savepath = savefolder + '%04d/'%idd 
       os.makedirs(savepath, exist_ok=True)
       snapshot = path%idd
@@ -51,6 +51,6 @@ for idd in range(2000):
       np.save(savepath + 'field', dm_comp)
       
       ps = FFTPower(dm_comp, mode='1d').power
-      k, p = ps.k, ps.power
+      k, p = ps.modes, ps.power
       np.save(savepath + 'power', np.stack([k, p]).T)
       del dm, dm_comp
