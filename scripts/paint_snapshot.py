@@ -5,6 +5,12 @@ from pmesh import ParticleMesh as pmnew
 from nbodykit.lab import FFTPower
 import sys, os
 
+import argparse
+
+parser = argparse.ArgumentParser(description='Process some integers.')
+parser.add_argument('--id0', type=int, help='sim number to start painting from')
+parser.add_argument('--id1', type=int, default=2000, help='sim number to paint upto')
+args = parser.parse_args()
 
 ##Setup Mesh 
 bs = 1000 #BoxSize
@@ -33,24 +39,41 @@ def cic_compensation(field, kernel=cic_kwts):
 
 
 #Setup Quijote
+#savefolder = "/mnt/ceph/users/cmodi/Quijote/latin_hypercube_nwLH/matter/N%04d/"%nc
 savefolder = "/mnt/ceph/users/cmodi/Quijote/latin_hypercube_HR/matter/N%04d/"%nc
+#path = "/mnt/home/fvillaescusa/ceph/Quijote/Snapshots/latin_hypercube_nwLH/%d/snapdir_004/snap_004"
+#savefolder = "/mnt/ceph/users/cmodi/Quijote/latin_hypercube_nwLH/matter/N%04d/"%nc
+#path = "/mnt/home/fvillaescusa/ceph/Quijote/Snapshots/latin_hypercube_nwLH/%d/snapdir_004/snap_004"
 
-path = "/mnt/home/fvillaescusa/ceph/Quijote/Snapshots/latin_hypercube_HR/%d/snapdir_004/snap_004"
 ptype = [1]
 col = "POS "
 
 idd = 0
-for idd in range(2000):
+for idd in range(args.id0, args.id1):
       print(idd)
       savepath = savefolder + '%04d/'%idd 
       os.makedirs(savepath, exist_ok=True)
-      snapshot = path%idd
-      pos = readgadget.read_block(snapshot, col, ptype)/1e3
-      dm = mesh.paint(pos)
-      dm_comp = cic_compensation(dm)
-      np.save(savepath + 'field', dm_comp)
+      try:
+            dm_comp = np.load(savepath + 'field.npy')
+            dm_comp = mesh.create(mode='real', value=dm_comp)
+            dm_comp = dm_comp/dm_comp.cmean() - 1
+            print("%d exists"%idd)
+
+            ps = FFTPower(dm_comp, mode='1d').power.data
+            k, p = ps['k'], ps['power'].real
+            np.save(savepath + 'power', np.stack([k, p]).T)
+            #pk = np.load(savepath + 'power.npy')
+      except Exception as e:
+            print(e)
+            snapshot = path%idd
+            pos = readgadget.read_block(snapshot, col, ptype)/1e3
+            dm = mesh.paint(pos)
+            dm_comp = cic_compensation(dm)
+            np.save(savepath + 'field', dm_comp)
       
-      ps = FFTPower(dm_comp, mode='1d').power.data
-      k, p = ps['k'], ps['power'].real
-      np.save(savepath + 'power', np.stack([k, p]).T)
-      del dm, dm_comp
+            dm_comp = dm_comp/dm_comp.cmean() - 1
+            ps = FFTPower(dm_comp, mode='1d').power.data
+            k, p = ps['k'], ps['power'].real
+            np.save(savepath + 'power', np.stack([k, p]).T)
+            del dm, dm_comp
+            

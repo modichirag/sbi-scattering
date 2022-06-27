@@ -5,7 +5,7 @@ import tensorflow as tf
 
 import numpy as np
 
-import sys
+import os, sys
 import flowpm
 import flowpm.tfpower as tfpower
 import flowpm.scipy.interpolate as interpolate
@@ -49,6 +49,7 @@ if __name__ == "__main__":
     print(mode)
     if mode == 'train': npoints, folder = 5000, '../data/traindata/'
     elif mode == 'test': npoints, folder = 250, '../data/testdata/'
+    os.makedirs(folder, exist_ok=True)
     lhs = Lhs(criterion="ratio", iterations=1000)
     points = np.array(lhs.generate([omc_range, s8_range, omb_range, h_range], npoints)).astype(np.float32)
     print(points.shape)
